@@ -1,0 +1,409 @@
+
+LDAP Classes for Java
+June 2005
+
+Table of Contents
+     1.0   LDAP Classes for Java
+     2.0   Known Issues and Solutions
+     3.0   Dependencies
+     4.0   Installation
+     5.0   LDAPv2 and LDAPv3 Support
+     6.0   Java LDAP Documentation
+     7.0   Building JLDAP
+     8.0   Building DSML Services
+           8.1  dsmlstream.war
+           8.2  dsmldom.war
+     9.0   Building DSMLv2 & SPML Connection Support
+     10.0  Using DSMLv2 Connection Support
+     11.0  Using SPML Connection Support
+
+1.0  LDAP Classes for Java
+
+          LDAP (Lightweight Directory Access Protocol) is
+          an emerging Internet standard for accessing directory
+          information, allowing LDAP-enabled applications to
+          access multiple directories. LDAP v3 supports such
+          features as secure connections (through SSL and SASL),
+          entry management, schema management, and LDAP controls
+          and extensions for expanding LDAP's functionality.
+
+          The LDAP Classes for Java enables you to
+          write applications to access, manage, update, and
+          search for information stored in LDAP-aware directories.
+
+          This API is a work-in-progress implementing the IETF draft 18
+          of the Java LDAP API (draft-ietf-ldapext-ldap-java-api-18.txt),
+          and as such, most but not all features in the IETF draft are
+          currently implemented.  For details, see section 2.0.
+          
+2.0 Known Issues and Solutions
+
+     -    The Java LDAP API IETF 18 draft Features not yet implemented.
+     
+          Classes do not yet extend Serializable
+          
+          The API does not return the exception LDAPLocalException in all
+          cases where the exception does not originate from the server.
+
+          The class LDAPExtendedResponse does not yet implement the register
+          method.
+          
+          
+     -    An incompatibility with previous versions exists for applicatons
+          using LDAPSchema.getAtribute() and LDAPSchemaElement.getName().
+		  Both methods were deprecated in the May 2002 NDK. These methods
+		  have been removed in this release of the API to comply with IETF
+		  draft version 18 (draft-ietf-ldapext-ldap-java-api-18.txt).
+		  The reason for this change is described in the following text.
+          
+          LDAPSchema now extends LDAPEntry.  This means that LDAPSchema
+		  inherits the getAttribute method from LDAPEntry which has the same
+		  signature as the getAttribute method of LDAPSchema, but the two
+		  methods differ in functionality.  Thus, the getAttribute method of
+		  LDAPSchema has been removed from the IETF draft and from the API
+          in this release.
+
+          To fix your application, use the getAttributeSchema method of
+          LDAPSchema instead of getAttribute.
+
+          The following error will occur when trying to compile code
+          using this deprecated method:
+                    incompatible types;
+                    found: com.novell.ldap.LDAPAttribute,
+                    required: com.novell.ldap.LDAPSchemaElement
+
+          The following error will occur when trying to run code using this
+          deprecated method:
+                    java.lang.NoSuchMethodError
+
+          LDAPSchemaElement now extends LDAPAttribute.  This means that
+		  LDAPSchemaElement inherits the getName method from LDAPAttribute
+		  which has the same signature as the getName method of
+		  LDAPSchemaElement, but the two methods differ in functionality.
+		  Thus, the getName method of LDAPSchemaElement has been removed
+		  from the IETF draft and from the API in this release.
+
+          To fix your application, use the getNames method of
+          LDAPSchemaElement instead of getName.
+
+          Note: You will not get a compile or runtime error if your code
+          uses this deprecated method.  You may, however, get errors trying
+          to intrepret the data returned.
+
+3.0  Dependencies
+
+     Building the Java LDAP API is dependent upon the following:
+
+     -    JDK 1.4 or higher, required for building classes that 
+          use the new DSML functionality. Optionally, you can use JDK 1.2
+          or higher by installing the JAXP package and XML parser and
+          by and placing the associated jar files the external directory
+          external/jaxp as follows:
+                external/jaxp/jaxp.jar
+                external/jaxp/xerces.jar
+
+     -    JDK 1.4 or higher, required for building classes that reference
+          TLS(SSL) connections. Optionally, you can download a Sun-compliant 
+          JSSE implementation to compile with JDK 1.2 or higher and place
+          the associated jar files in the external/jsse directory as follows:
+                external/jsse/lib/jcert.jar
+                external/jsse/lib/jnet.jar
+                external/jsse/lib/jsse.jar
+
+     -    The Ant build tool for Java, required for building the product.
+          Ant was developed by the jakarta.apache.org project and can be
+          obtained from their web site.  We have built this system using
+          Ant version 1.5.1 compiled on October 2 2002.
+
+          The ant tool is placed in the following directory structure
+          under the root of the source.
+                external/ant/LICENSE
+                external/ant/LICENSE.dom
+                external/ant/LICENSE.sax
+                external/ant/LICENSE.xerces
+                external/ant/welcome.html
+                external/ant/bin/ant
+                external/ant/bin/ant.bat
+                external/ant/bin/antRun
+                external/ant/bin/antRun.bat
+                external/ant/bin/lcp.bat
+                external/ant/etc/changelog.xsl
+                external/ant/etc/checkstyle-frames.xsl
+                external/ant/etc/coverage-frames.xsl
+                external/ant/etc/jdepend-frames.xsl
+                external/ant/etc/jdepend.xsl
+                external/ant/etc/junit-frames.xsl
+                external/ant/etc/junit-noframes.xsl
+                external/ant/etc/log.xsl
+                external/ant/etc/maudit-frames.xsl
+                external/ant/etc/mmetrics-frames.xsl
+                external/ant/etc/tagdiff.xsl
+                external/ant/lib/ant.jar
+                external/ant/lib/optional.jar
+                external/ant/lib/xercesImpl.jar
+                external/ant/lib/xml-apis.jar
+
+     Running an application that uses the LDAP Classes for
+     Java is dependent upon the following:
+
+     -    JRE 1.2 or higher, required to run an application.
+          
+     -    JDK/JRE 1.4 or higher, required for running appplications that use
+          the new DSML functionality. Optionally, you can use JDK/JRE 1.2 or
+          higher by installing the JAXP package and setting the associated 
+          jar files in your classpath.
+
+     -    JDK/JRE 1.4 or higher, required for running applications that create
+          TLS(SSL) connections. Optionally, you can download a Sun-compliant 
+          JSSE implementation to run with JDK/JRE 1.2 or higher.
+
+     -    A directory that supports TLS(SSL), required if you wish to
+          run applications that create TLS(SSL) connections.  
+          
+     -    Novell eDirectory 8.5 or higher, required if you wish to run
+          applications that use the LDAP extensions for partition and
+          replica management.
+
+     -    Applications that use com.novell.ldap.util.DSMLReader require
+          an XML parser (like xerces.jar) in order to run. This jar file needs
+          to be in classpath of the Application.
+
+
+4.0  Installation
+
+     To install the libraries do the following:
+     1. Run the build process outlined below.
+
+     2. Copy the ldap.jar file (either debug or release) to a directory
+        of your choice on your platform.
+
+     3. Add the complete path, including the file name, of the
+        ldap.jar file to your CLASSPATH.
+
+5.0  LDAPv2 and LDAPv3 Support
+
+          This version of the LDAP Classes for Java supports LDAPv3.
+          Since the consensus in the LDAP community is to encourage
+          everyone to update to LDAPv3, there is no attempt to ensure
+          that these libraries support LDAPv2 servers.
+
+6.0  Java LDAP Documentation
+
+     Building JLDAP generates javadoc for the Java LDAP Classes.
+     There are three directories containing javadoc.  The index.html
+     file is the starting point for the javadoc in each of the directories.
+     The directories are:
+     
+     pkg/ietfdoc  - contains javadoc for the public classes of the IETF LDAP
+                    Java API.  These classes are used by applications needing
+                    binary compatibility with Java LDAP implementations from 
+                    other vendors.
+                    
+     pkg/doc      - contains javadoc for the public classes of the Novell LDAP
+                    Java API.  These classes provide a richer set of
+                    functionality than the IETF classes, and are used by
+                    applications needing a full featured API.
+                    
+     doc          - contains javadoc for all classes in the LDAP Java API,
+     				and includes package and private methods and variables.
+                    This javadoc is typically used by developers developing
+                    or modifying the API.
+                    
+7.0  Building JLDAP
+
+JLDAP is built using a system developed by jakarta.apache.org called ANT.
+
+The build files are named "build.xml" and "javac.xml" and are found in the
+root directory of the Java LDAP source.
+
+To set up your environment for ANT, do the following:
+
+For Win32
+    Assuming this source directory on win32 is d:\com.github.terefang.jldap, and java is installed
+    in d:\j2sdk1.4.1_1 then you set in your environment:
+
+        set JAVA_HOME=d:\j2sdk1.4.1_1
+        set ANT_HOME=d:\com.github.terefang.jldap\external\ant
+        PATH %ANT_HOME%\bin;%JAVA_HOME%\bin;%PATH%
+
+For Linux / Unix
+    Assuming the following:
+        1) A Linux system running bourne shell
+        2) The source directory is located in /work/com.github.terefang.jldap
+        3) The Java jdk is installed in /usr/local/j2sdk1.4.1_1
+    then export in your environment:
+
+        ANT_HOME=/work/com.github.terefang.jldap/external/ant
+        JAVA_HOME=/usr/local/j2sdk1.4.1_1
+        PATH="$ANT_HOME/bin:$JAVA_HOME/bin:$PATH"
+        export ANT_HOME JAVA_HOME PATH
+
+To build everything except the DSML services, invoke ant as follows from the
+top of the source tree:
+
+    ant all
+
+Targets available at the top of the source tree are:
+     clean     - Cleans all generated files and directories in this and
+                 subbordinate directories
+     cleanpkg  - Cleans pkg directory
+     cleanwars - Cleans services/dsml directory 
+     doc       - Builds javadoc files
+     debug     - Builds debug classes and jar files
+     release   - Builds release classes and jar files
+     lib       - Builds debug & release classes and jar files
+     jar       - Synonym for lib
+     all       - Builds everything possible except the DSML services. 
+                 This builds in all directories - debug and release jar files,
+                 java doc, samples, test programs, and creates an installation
+                 directory called pkg.
+     install   - Copies build results from all directories and creates the
+                 pkg directory
+     pkg       - Synonym for install
+     war_stream- Builds dsmlstream.war (see 8.0 Building DSML Services)
+     war_dom   - Builds dsmldom.war (see 8.0 Building DSML Services)
+     wars      - Builds dsmlstream.war and dsmldom.war 
+     
+The following directories are created when "ant all" is run:
+
+    Contents of directories in the ldap directory
+        com.github.terefang.jldap/ldap/classes          # Classes used to build lib/ldap.jar
+        com.github.terefang.jldap/ldap/classes_debug    # Classes used to build lib_debug/ldap.jar
+        com.github.terefang.jldap/ldap/doc              # Developer Javadoc for classes in ldap.jar
+        com.github.terefang.jldap/ldap/lib              # Jar file for ldap - optimized, debug off
+        com.github.terefang.jldap/ldap/lib_debug        # Jar file for ldap - not optimized, debug on
+
+    Contents of directories in the com.github.terefang.jldap/pkg directory
+        com.github.terefang.jldap/pkg                   # Distribution directories and files
+        com.github.terefang.jldap/pkg/doc               # Javadoc for the Java LDAP API
+        com.github.terefang.jldap/pkg/ietfdoc           # Javadoc for the IETF Java LDAP API
+        com.github.terefang.jldap/pkg/lib               # Jar file for ldap - optimized, debug off
+        com.github.terefang.jldap/pkg/lib_debug         # Jar file for ldap - not optimized, debug on
+
+8.0 Building DSML Services
+
+The LDAP Classes for Java include functionality that enables an LDAP server to
+run as a DSML service. Currently there are two DSML service implementations 
+(.war files) that can be generated using the ant build process: dsmlstream.war
+and dsmldom.war. See README.dsml for additional information.
+
+     8.1 dsmldom.war
+     
+     In addition to the dependencies listed in section 3.0, building 
+     dsmldom.war is dependent upon the following:
+     
+     -    Novell eXtend JBroker Web. During the JBroker Web installation, 
+          specify the following install location: 
+          <javasource_home>/external/JBroker. JBroker Web can be obtained
+          at http://developer.novell.com/ndk/jbroker.htm.     
+
+     To build dsmldom.war, invoke ant as follows from the
+     top of the source tree:
+
+     ant war_dom
+
+     8.2 dsmlstream.war
+     
+     In addition to the dependencies listed in section 3.0, building 
+     dsmlstream.war is dependent upon the following:
+     
+     -    servlet.jar. If you have installed JBroker Web, as outlined
+          in 8.1, servlet.jar is already installed.  If not, place the
+          servlet.jar from your application server (JBroker, tomcat, etc.)
+          in the directory <javasource_home>/external/servlet/.
+          
+     NOTE: dsmlstream.war requires an XML parser (like xerces.jar) in order 
+           to run. This jar file needs to be in the classpath of the Web 
+           Application Server or Servlet engine running dsmlstream.war.
+                    
+     To build dsmlstream.war, invoke ant as follows from the
+     top of the source tree:
+
+     ant war_stream
+          
+     You can build both of the above war files by invoking ant as follows:
+
+     ant wars
+
+9.0  Building DSMLv2 & SPML Connection Support
+     
+     The JLDAP libraries provide optional support for using DSMLv2 and SPML in 
+     a similar fashion as you would use an LDAP connection.  In order to build 
+     support for this functionality into JLDAP you need to add the following 
+     libraries to the "ext" directory of your JLDAP source directory:
+     
+     commons-httpclient-*.jar - http://jakarta.apache.org/site/news/news-2005-q2.html#20050410.1
+     openspml.jar & soap.jar - http://www.openspml.org/
+     
+10.  Using DSMLv2 Connection Support
+	 
+	 The JLDAP libraries provide optional support for interacting with DSMLv2 based directories 
+	 like you would an LDAP directory.  In order to use this functionality, you first create your 
+	 DSML connection:
+	 
+	 DsmlConnection dsmlCon = new DsmlConnection();
+	 
+	 //Some DSMLv2 implementations do not support SOAP
+	 dsmlCon.setUseSOAP(true);
+	 //The port is in the URL
+	 dsmlCon.connect("http://my.ldap.domain.com:port/path/to/dsmlv2",0);
+	 
+	 LDAPConnection con = dsmlCon;
+	 con.bin("CN=User","secret");
+	 .
+	 .
+	 .
+	 
+	 Once case to an LDAPConnection, you can perform any synchronouse operation.  Operations that 
+	 involve queue's are not supported.  The bind operation includes the bind dn and password in 
+	 an HTTP BASIC authentication header.
+	 
+	 In addtion you may create an implementation of the com.novell.ldap.util.HttpRequestCallback 
+	 interface to add HTTP Header variables.
+	 
+	 The DSMLv2 connection library has been tested with Novell DSMLv2 web services, Octet String 
+	 VDE 3.0+ and IBM Tivoli Directory Integrator.
+	 
+11.  Using SPML Connection Support
+     
+     The JLDAP libraries provide optional support for the Service Provisioning Markup Language.  
+     SPML is a standard for integrating and interacting with provisioning servers.  SPML support
+     is provided by the OpenSPML project.  In order to use SPML using JLDAP:
+
+     //Create the connection using a "no auth" implementation.
+     SPMLConnection spmlCon = new SPMLConnection("com.novell.ldap.spml.NoAuthImpl");
+	 spmlCon.connect("http://my.spml.domain.com/path/to/spml",0);
+	 LDAPConnection con = spmlCon;
+	 .
+	 .
+	 .
+	 
+	 
+	 Like the DSMLv2 connection libraries, the SPML libraries only support synchronous operations.
+	 As in DSMLv2, there is no BIND operation.  Each SPML implementation has it's own standard.  JLDAP
+	 contains support for Sun Identity Manager and OpenSPML implementations.  New authentication 
+	 schemes can be implemented by implementing the com.novell.ldap.spml.SPMLImpl interface.
+	 
+	 When manipluating users, the DN takes the follwing form:
+	 
+	 IdentityType=name
+	 
+	 For instance, using the GenericString identifier the DN may be
+	 
+	 GenericString=myUserName
+	 
+	 	 
+     
+$OpenLDAP$
+ ******************************************************************************
+ * Copyright (C) 1999 - 2003 Novell, Inc. All Rights Reserved.
+ *
+ * THIS WORK IS SUBJECT TO U.S. AND INTERNATIONAL COPYRIGHT LAWS AND
+ * TREATIES. USE, MODIFICATION, AND REDISTRIBUTION OF THIS WORK IS SUBJECT
+ * TO VERSION 2.0.1 OF THE OPENLDAP PUBLIC LICENSE, A COPY OF WHICH IS
+ * AVAILABLE AT HTTP://WWW.OPENLDAP.ORG/LICENSE.HTML OR IN THE FILE "LICENSE"
+ * IN THE TOP-LEVEL DIRECTORY OF THE DISTRIBUTION. ANY USE OR EXPLOITATION
+ * OF THIS WORK OTHER THAN AS AUTHORIZED IN VERSION 2.0.1 OF THE OPENLDAP
+ * PUBLIC LICENSE, OR OTHER PRIOR WRITTEN CONSENT FROM NOVELL, COULD SUBJECT
+ * THE PERPETRATOR TO CRIMINAL AND CIVIL LIABILITY.
+ ******************************************************************************
